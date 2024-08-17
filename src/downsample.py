@@ -1,3 +1,5 @@
+# can I get this all to work with bcf/bzipped files?? That would really improve things 
+
 import subprocess
 import random
 from helper_functions import parse_header
@@ -11,12 +13,15 @@ def get_keep_lines(vcf_path, num):
 
     # this is how many data lines there are in the file:
     all_lines = int(all_lines.strip().split(" ")[0]) - header_lines
-
+    print(f"all lines: {all_lines}")
+    print(num)
     # select num rows from the all_lines available data rows
     to_keep = random.sample(list(range(all_lines)), num)
     to_keep.sort()
+    # to_keep is the list of the lines that we're keeping
     return(to_keep)
 
+# ok better idea - I could just do my bcftools call from here. That would be wayyyyy faster and probably still not annoying
 def downsample(vcf_path, new_vcf, num):
     line_count = 0
     to_keep = get_keep_lines(vcf_path, num)

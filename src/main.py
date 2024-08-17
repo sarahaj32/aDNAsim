@@ -1,4 +1,5 @@
 import argparse
+
 from deaminate_sim import add_deam
 from pseudohaploid_sim import make_pseudohaploid
 from contam_sim import add_anc_contamination, add_mh_contamination
@@ -46,18 +47,17 @@ def main():
     missing_subparser.add_argument("-vcf",help="path to vcf to simulate damage in", type=str, required = True)
     missing_subparser.add_argument("-targets", metavar='',help="Target individuals to simulate features on", type=str, default = "")
     missing_subparser.add_argument("-out",help="[required] path to output simulated vcf", type=str, default = "out.vcf")
-    missing_subparser.add_argument("-rate", metavar='',help="rate of missingness to induce", type=int, default=.1)
+    missing_subparser.add_argument("-rate", metavar='',help="rate of missingness to induce", type=float, default=.1)
 
     # add depth and filter
-    depth_subparser = subparser.add_parser('dp_filter', help='Downsample VCF')
+    depth_subparser = subparser.add_parser('dpFilter', help='Downsample VCF')
     depth_subparser.add_argument("-vcf",help="path to vcf to simulate damage in", type=str, required = True)
     depth_subparser.add_argument("-out",help="[required] path to output simulated vcf", type=str, default = "out.vcf")
     depth_subparser.add_argument("-mean", metavar='',help="mean depth to simulate", type=int, default=5)
-    depth_subparser.add_argument("-variance", metavar='',help="variance of depth to simulate", type=int, default=2)
+    depth_subparser.add_argument("-r", "--variance", metavar='',help="variance of depth to simulate", type=int, default=2)
     depth_subparser.add_argument("-distribution", metavar='',help="distribution to use to simulate depth from", type=str, default="normal")
     depth_subparser.add_argument("-missing", help="flag that indiciates to remove sites with 0 reads", action = "store_true")
-    depth_subparser.add_argument("-annotate, help="flag that indiciates to only annotate with depth", action = "store_true")
-
+    depth_subparser.add_argument("-annotate", help="flag that indiciates to only annotate with depth", action = "store_true")
     depth_subparser.add_argument("-targets", metavar='',help="Target individuals to simulate features on", type=str, default = "")
 
 
@@ -90,18 +90,19 @@ def main():
         else:
             add_deam(args.vcf, args.out, sample_list, args.rate)
 
-    if args.mode == "dp_filter":
+    if args.mode == "dpFilter":
         sample_list = parse_target_indivs(args.targets)
         if args.distribution == "poisson":
             args.variance = args.mean
         elif args.missing:
+            print("ALL")
             fun = "pos_depth_all"
         elif args.annotate:
             fun = "pos_depth_only"
-        else:
+        else: # by default - annotate and add false homozygotes but don't induce missingness
+            print("NO REMOVE")
             fun = "pos_depth_homo"
 
-        print(fun)
         add_depth(args.vcf, args.out, sample_list, args.mean, args.variance, args.distribution, fun)
 
     if args.mode == "downsample":
@@ -117,73 +118,9 @@ def main():
         else:
             add_missingness(args.vcf, args.out, sample_list, args.rate)
 
-
-    # assert(deaminate >= 0 and deaminate < 1)
-    # contamination = args.contamination
-    # assert(contamination >= 0 and contamination < 1)
-    # depth = args.reduce_depth
-    # # ascertain = args.ascertain
-
-    # # no longer using this option:
-    # # rename files using the parameters in the output directory name
-    # basename = vcf_path.split("/")[-1].replace(".vcf", "")
-    # print(f"basename:{basename}")
-    # #if name != "":
-    # #name = f"_{name}"
-    # #else:
-    # #    name = "_simulated"
-
-    # new_vcf = f"{out_dir}/{basename}{name}.vcf"
-    # if "data" in out_dir:
-    #     replace = str.split(out_dir, sep = "/")
-    #     replace_name = replace[replace.index("data") + 2]
-    #     new_vcf = re.sub("sim1_\w*_full", f"sim1_{replace_name}_full", new_vcf)
-
-    # print(f"writing new file:{new_vcf}")
-    # if sample_list == "":
-    #     sample_list = []
-    # else:
-    #     sample_list = [s.strip() for s in sample_list.split(",")]
-
-    # if modern_pops == "":
-    #     modern_pops = []
-    # else:
-    #     modern_pops = [s.strip() for s in modern_pops.split(",")]
-
-    # print(f"sample list: {sample_list}")
-
-
-# print('reading in file')
-
 if __name__ == "__main__":
     print("starting")
     main()
-
-#     if deaminate > 0:
-#         print("Deaminating")
-#         add_deam(vcf_path, new_vcf, sample_list, deaminate)
-#         print("finished adding deamination")
-#     if contamination > 0:
-#         print("Adding Ancestral Contamination")
-#         add_contamination(vcf_path, new_vcf, sample_list, contamination)
-#         print("finished adding ancestral contamination")
-#     if depth > 0:
-#         print("adding depths")
-#         add_depth(vcf_path, new_vcf, sample_list, depth, 2)
-#         print("finished simulating depths")
-#     if ds > 0:
-#         print("downsampling")
-#         downsample(vcf_path, new_vcf, ds)
-#     if modern_contamination > 0:
-#         print('adding modern human contamination')
-#         add_modern_human_cont(vcf_path, new_vcf, sample_list, modern_pops, modern_contamination, mh_contam_range)
-    # if ascertain != "":
-    #     ascertain_positions(vcf_path, new_vcf, ascertain)
-    # # if i > 0: # i found a better way to do this - just change the ind files
-    #     print("selecting samples")
-    #     select_samples(vcf_path, new_vcf, sample_list, select, i)
-    #     print("finished selecting samples")
-
 
 # variables for testing:
 # vcf_path = "/global/scratch/users/sarahj32/sim-fstats/data/medium/original/full/vcf/sim1_original_full_filtered_17.vcf"
