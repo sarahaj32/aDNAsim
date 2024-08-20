@@ -1,4 +1,4 @@
-data/*
-.snakemake/*
-logs/*
+data/
+.snakemake/
+logs/
 src/__pycache__/
