@@ -34,7 +34,8 @@ rule simulate:
         # "envs/sims_environment.yml"
         "sims"
     resources: 
-        cpus = 2
+        cpus = 2,
+        time='03:00:00'
     shell: 
      # simulate populations using msprime, from yaml file and json file of individuals
         """

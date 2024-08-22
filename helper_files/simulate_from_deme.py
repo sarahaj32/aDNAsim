@@ -1,3 +1,6 @@
+# takes ~1 hr to simulate chromosome 1 
+# so if we parallelize across 22 cores, then it takes 1 hr
+
 import msprime
 import argparse
 import demes 
