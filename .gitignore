@@ -1,4 +1,5 @@
 data/
+data_output/
 .snakemake/
 logs/
 src/__pycache__/
