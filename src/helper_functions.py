@@ -1,4 +1,11 @@
 def parse_header(line, sample_list):
+    """
+    A helper function that parses the header line of a VCF file
+    and outputs a dictionary with the index of the:
+    -reference allele, -alternative allele, -position, -format
+    Additionally creates and outputs a list of indices for the specified samples
+    """
+
     ref_ix = line.index("REF")
     alt_ix = line.index("ALT")
     pos_ix = line.index("POS")
@@ -19,12 +26,4 @@ def parse_header(line, sample_list):
         # print("provided population names not in file. Breaking")
         raise Exception("provided population names not in file. Breaking")
     return header_ix, include
-
-def parse_target_indivs(input):
-    sample_list = input.strip()
-    if sample_list == "":
-        sample_list = []
-    else:
-        sample_list = [s.strip() for s in sample_list.split(",")]  
-    return(sample_list)
 
