@@ -1,4 +1,7 @@
-# can I get this all to work with bcf/bzipped files?? That would really improve things 
+"""
+Helper file with functions to downsample a VCF to a specified number of sites
+and add missing genotypes to a VCF at a specified rate
+"""
 
 import subprocess
 import random
@@ -6,12 +9,18 @@ import os.path
 from helper_functions import parse_header
 
 def get_keep_lines(vcf_path, num):
+    """
+    A helper function that determines how many data lines are in a vcf file (excluding header),
+    downsamples to a specified number of lines, and outputs a list of the subsampled
+    lines to keep 
+    """
     # i should use bcftools - that would allow this to be gzipped
+    # find out how many lines are in the file
     all_lines = subprocess.run(["wc", "-l", vcf_path], capture_output = True, text = True).stdout
     # also find out how many header rows there are
     header_lines = subprocess.run(["grep", "^#", "-c", vcf_path], capture_output = True, text = True).stdout
     header_lines = int(header_lines.strip().split(" ")[0])
-    # this is how many data lines there are in the file:
+    # calculate how many data lines there are in the file:
     all_lines = int(all_lines.strip().split(" ")[0]) - header_lines
     print(f"all lines: {all_lines}")
     print(num)
@@ -23,6 +32,10 @@ def get_keep_lines(vcf_path, num):
     return(to_keep)
 
 def downsample(vcf_path, new_vcf, num):
+    """
+    A function that only saves a specified number 'num' of positions to the new vcf 
+    These positions are randomly distributed across the input file
+    """
     to_keep = get_keep_lines(vcf_path, num)
     with open(vcf_path, "r") as file1, open(new_vcf, "w") as outfile:
         line_count = 0
@@ -35,84 +48,22 @@ def downsample(vcf_path, new_vcf, num):
                 line = line.strip().split("\t")
                 to_keep.remove(line_count)
                 outfile.write("\t".join(line) + "\n")
-            line_count += 1
-
-# def make_index_file(vcf_path, index_file):
-
-#    # write index file
-#     if index_file == "":
-#         index_file = f"{vcf_path}.index"
-#         print("INDEX FILE:")
-#         print(index_file)
-
-#     make = True
-
-#     # if file exists and has lines - then don't make it
-#     if os.path.isfile(index_file):
-#         lines = subprocess.run(["wc", "-l", index_file], capture_output = True, text = True).stdout
-#         print("LINE COUNT:")
-#         line_count = int(lines.strip().split(" ")[0])
-#         print(line_count)
-#         if line_count > 0:
-#             make = False
- 
-#     if make:
-#         print("writing file of indices for downsampling")
-#         with open(index_file, "w") as f:
-#             subprocess.run(["cut", "-f1-2", vcf_path], stdout=f)
-#     else:
-#         print("indices already made, processing")
-#     return(index_file)
-
-# def get_header(vcf_path):
-#     # helper function to count the number of "#" lines (header lines)
-#     header_lines = subprocess.run(["grep", "^#", "-c", vcf_path], capture_output = True, text = True).stdout
-#     header_lines = int(header_lines.strip().split(" ")[0])
-#     print(f"header lines: {header_lines}")
-#     return(header_lines)
-
-# def downsample(vcf_path, new_vcf, num, indices, rep):
-#     # use a uniqe ID (either the rep or create one)
-#     if rep == None:
-#         rep = uuid.uuid4()
-
-#     # create a file with the first two columns of the vcf file (if necessary)
-#     indices = make_index_file(vcf_path, indices)
-
-#     # file with the SNP lines that we want to keep for downsampling
-#     line_file = f"tmp_ds{num}_{rep}"
-#     print(f"tmp: {line_file}")
-#     # number of lines in the header
-#     header_lines = get_header(vcf_path)
-#     print(f"tmp line file")
-    
-#     # shuffle the indices and select the first n positions
-#     print(f"number: {num}")
-#     with open(line_file, "a") as lf:
-#         command = f"tail -n +{header_lines} {indices} | sort -R | head -{num}"
-#         subprocess.run(command, shell=True, stdout=lf, stderr=subprocess.PIPE, text=True)
-#     print("tmp file written")
-    
-#     # write the header to the dowsampled file
-#     with open(new_vcf, "w") as nf:
-#         subprocess.run(["sed", f"{header_lines}q;d", indices], stdout=nf)
-#     # now select those positions from the vcf
-#     with open(new_vcf, "a") as nf:
-#         subprocess.run(["bcftools", "view", vcf_path, "-T", line_file], stdout=nf)
-#         print("DONE")
-#         print(new_vcf)
-#     #os.remove(line_file)
-#     print("done")
-    
-
+            line_count += 1   
 
 def missing(gt, rate):
+    """
+    A helper function that returns a missing genotype at a specified rate
+    """
     if random.random() <= rate:
         return("./.")
     else:
         return(gt)
 
 def add_missingness(vcf_path, new_vcf, sample_list, rate):
+    """
+    A function that converts a specified rate of genotypes to missing in the 
+    specified samples
+    """
     with open(vcf_path, "r") as file1, open(new_vcf, "w") as outfile:
         for line in file1:
             line = line.strip().split("\t")
@@ -123,7 +74,7 @@ def add_missingness(vcf_path, new_vcf, sample_list, rate):
                     print(f"adding missingness to: {sample_list}")
                     print(f"include:{include}")
             else:
+                # convert genotypes in the specified samples to missing at the given rate
                 line = [missing(line[i], rate) if i in include else line[i] for i in range(len(line))]
-               # the line may be updated by the above step or not. Regardless, write it out
                 outfile.write("\t".join(line) + "\n")
 
