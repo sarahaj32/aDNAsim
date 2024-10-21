@@ -2,7 +2,7 @@
 
 Dependencies: Python3
 
-Required arguments:
+### Required arguments for all simulation modes:
 
 **simulation mode** (options: deaminate, contaminate, downsample, missing, dpFilter, psuedohaploid)
 
