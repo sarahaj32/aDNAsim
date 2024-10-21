@@ -1,5 +1,5 @@
 """
-Helper file with functions that randomly samples read depths from a given distribution 
+Helper file with functions that randomly samples read depths from a normal distribution 
 for specified individuals. Does not alter the genotypes of other individuals.
 Also contains an option to remove
 """
@@ -10,7 +10,7 @@ import random
 
 def get_depth(mean, var):
     """
-    A helper function that samples depth from a given normal distribution,
+    A helper function that samples depth from a normal distribution,
     with a given mean and variance.
     This is the total reads for this site, is distributed across alleles in later functions
     I should change so that it's not only normal
@@ -124,7 +124,7 @@ def pos_depth_homo(pos, mean, var):
     return(f"{gt}{pos[3:]}:{str(depth1)},{str(depth2)}:{str(depth)}")
 
 
-def add_depth(vcf_path, new_vcf, sample_list, mean, var, distribution, fun_name):
+def add_depth(vcf_path, new_vcf, sample_list, mean, var, fun_name): # distribution, 
     """
     function that 
     """
@@ -161,5 +161,5 @@ def add_depth(vcf_path, new_vcf, sample_list, mean, var, distribution, fun_name)
                 line = [line[i] for i in range(len(line)) if i not in exclude_ix]
                 # then recombine
                 line = metrics + line
-                
+
                 outfile.write("\t".join(line) + "\n")
