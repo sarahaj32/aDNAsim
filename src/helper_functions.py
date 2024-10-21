@@ -27,3 +27,10 @@ def parse_header(line, sample_list):
         raise Exception("provided population names not in file. Breaking")
     return header_ix, include
 
+def parse_target_indivs(input):
+    sample_list = input.strip()
+    if sample_list == "":
+        sample_list = []
+    else:
+        sample_list = [s.strip() for s in sample_list.split(",")]  
+    return(sample_list)
