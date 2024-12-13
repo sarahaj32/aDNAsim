@@ -71,6 +71,7 @@ def pos_depth_only(pos, mean, var):
     """
 
     depth1, depth2 = get_depth(mean, var)
+    depth = depth1 + depth2
 
     # homozygous: all reads support 1 allele     
     if pos[0] == pos[2]:
@@ -97,6 +98,7 @@ def pos_depth_homo(pos, mean, var):
     """
 
     depth1, depth2 = get_depth(mean, var)
+    depth = depth1 + depth2
 
     # homozygous: all reads support 1 allele 
     if pos[0] == pos[2]:
