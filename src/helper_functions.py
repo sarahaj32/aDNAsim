@@ -1,9 +1,12 @@
 import json
 
 def parse_indivs(samp_input, ind_type):
-    # create a list of individuals from either a json file or a comma-separated string
+    """
+    A helper function that returns a list of individuals parsed from either a json file or a comma-separated string
+    """
     if ".json" in samp_input:
         return(parse_indivs_from_json(samp_input, ind_type))
+    # if the input is a comma-separated string, parse the individuals
     sample_list = samp_input.strip()
     if sample_list == "":
         sample_list = []
@@ -12,6 +15,10 @@ def parse_indivs(samp_input, ind_type):
     return(sample_list)
 
 def parse_indivs_from_json(samp_json, ind_type):
+    """
+    A helper function that parses a json file, and returns a list of individuals matching the ind_type
+    ind_type should be either "target" or "contam" to match the json file
+    """
     with open(samp_json, "r") as f:
         data = json.load(f)
     # make all keys lowercase in case they were typed differently in the json file
@@ -51,3 +58,10 @@ def parse_header(line, sample_list):
         raise Exception("None of the provided sample names were found in file. Breaking")
     include_names = [line[i] for i in include_idx]
     return header_ix, include_idx, include_names
+
+def multiallelic(line, header_idx):
+    if "," in line[header_idx["alt_ix"]]:
+        print(line)
+        return True
+    else:
+        return False
