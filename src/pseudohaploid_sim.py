@@ -2,13 +2,14 @@
 Helper file with functions to randomly sample an allele
 from heterozygous positions, outputting pseudo-haploid genotype calls
 """
-from helper_functions import parse_header
+
+from helper_functions import parse_header, multiallelic
 import random
 
 def ph_geno_call(base):
     """
     helper function that randomly selects an allele
-    from the given genotypes
+    from the given genotypes, with equal probability
     """
     if base[0] == base[2]:
         return base
@@ -29,9 +30,15 @@ def make_pseudohaploid(vcf_path, new_vcf, sample_list):
             if line[0].startswith("#"): 
                 outfile.write("\t".join(line) + "\n")
                 if "#CHROM" in line[0]:
+                    # header_idx: dictionary with indices of VCF header columns
                     # include: the indices of the samples for the simulation to be applied to
-                    _, include = parse_header(line, sample_list)
-                    print(f"making {sample_list} samples pseudohaploid")
+                    # names: the sample names corresponding to the include indices
+                    header_idx, include, names = parse_header(line, sample_list)
+                    # sample list provides the names and indices of the samples to be pseudohaplotyped
+                    if sample_list != []:
+                        print(f"making {names} samples pseudohaploid")
+                    else:
+                        print("making all samples pseudohaploid")
             else:
                 # convert to pseudohaploid if the individual is specified to be pseudohaploid
                 line = [ph_geno_call(line[i]) if i in include else line[i] for i in range(len(line))]
