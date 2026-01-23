@@ -1,11 +1,15 @@
 # ArchSim
 ## A package for simulating archaic sediment and skeletal DNA features in VCF's
 
+### Contact:
+sarahj32@berkeley.edu
+
 ---
 1. [Installation](#Installation)
 2. [Usage](#Usage)
-3. [Simulation Details and Examples](#Simulation)
-3. [Examples](#Examples)
+3. [Simulation Details and Examples](#Simulation Details and Example)
+4. [Examples](#Examples)
+5. [Combining Features](#Combining Features)
 ---
 
 ## Installation
@@ -15,26 +19,14 @@ Clone the repository:
 git clone https://github.com/sarahaj32/archSim.git
 ```
 
-Dependencies: Python3, json
-Ensure that python3 is installed
+Dependencies: Python3
 
 ## Usage 
+archSim is run on command line by calling: `python src/main.py`
+
+Parameter details: (this can also be shown for each method with the help flag: `python src/main.py deaminate -h`)
+
 ```note
-
-The package is run on command line 
-### Required arguments for all simulation modes:
-**simulation mode** (options: psuedohaploid, deaminate, contaminate, downsample, missing, dpFilter)
-
--**vcf** <vcf_path>
-
-### Optional arguments for all simulation modes:
--**out** [name and path to output file] default = out.vcf
-
--**targets** [comma separated list of target populations] default = all
-or a json file with "targets": 
-
-### Module specific arguments:
-
 > psuedohaploid         
     -vcf                [required] path to the vcf to simulate data in
     -out                outputfile (defaults to pseudohaploid.vcf)
@@ -83,9 +75,16 @@ or a json file with "targets":
 ## Example Data:
 To provide examples of archSim's usage, we simulated human data under a simple demography with an outgroup (representing African modern humans), a deeply divergent lineage (representing archaic hominins), and an admixed population between the outgroup and diverged lineage (representing non-African modern humans). The admixed population was sampled shortly after admixture and at present day, representing an ancient individual and modern human.
 
-vcf=simulated_data_21.vcf
+`vcf=test/simulated_data.vcf`
+In this dataset, the following names correspond to the following populations:
+Afr - African outgroup
+admix - modern humans with archaic admixture, sampled shortly after admixture
+AMH - anatomically modern humans, sampled prior to archaic admixture
+mh_contam - modern humans with archaic admixture, sampled at present time
 
-There is also an example json file, which identifies all of the "admixed" individuals as targets, and all of the "modern human" indivduals as contamination sources.
+There is also an example json file `test/individuals_all.json`, which identifies all of the "admixed" individuals as targets, and all of the "modern human" indivduals as contamination sources.
+
+With these files, you can replicate all of the below examples.
 
 ## Simulation Details and Examples
 
@@ -118,7 +117,7 @@ Let's simulate deamination-related errors in the target individuals only:
 python src/main.py deaminate -vcf $vcf -targets test/individuals_all.json -out ./test/simulated_human_deaminated_21.vcf 
 ```
 
-## contaminate (ancestral)
+## contaminate (ancestral):
 We simulate faunal contamination by converting derived alleles to the ancestral at the specified rate (0.05 by default). If a site is contaminated and converted to heterozygous, and the orignal genotype was phased, the ancestral allele will be randomly assinged between chromosomes. Multiallelic positions are skipped in this step and removed from the output file. 
 
 Note - this assumes that the VCF is polarized so that the reference allele is ancestral and the alternative allele is derived. If the VCF is not polarized, ancestral contamination can be simulated using the "modern human" simulation mode (see next section).
@@ -134,7 +133,7 @@ Let's simulate a large amount of ancestral contamination in the target individua
 python src/main.py contaminate -vcf $vcf -targets test/individuals_all.json -ancestral -rate 0.2 -out ./test/simulated_human_highAncContam_21.vcf 
 ```
 
-## contaminate (modern human)
+## contaminate (modern human):
 We simulate modern human contamination by replacing the genotypes of the target individuals with the genotypes of a randomly selected contaminating individual, at at specified rate (default = 0.05). At each position in each individual, the contaminating genotype will be randomly selected from genotypes at that position of all the contaminating individuals. 
 
 Contamination from the same individual can be simulated into the same target individual in chunks by specifying the length argument. If the `-length 1000` argument is added, then at the given rate the target individual's next 1000 genotypes will be replaced by the next 1000 genotypes of one of the contaminating individuals. Note that if all VCF snps are at least 1000 bp apart, the `-length 1000` will yield the same results as not specifying the length (or `-length 1`). If VCF snps are closer than 1000 bp, then the resulting contamination amount will be slightly higher than the provided rate, since the rate specifies how often the chunk of 1000 bp are replaced, but each contamination event contributes more than 1 contaminating genotype
@@ -158,7 +157,7 @@ Let's simulate a contamination from a single individual (Afr_8) into the target 
 python src/main.py contaminate -vcf $vcf -mh -targets test/individuals_all.json -modern Afr_8 -rate 0.08 -out ./test/simulated_human_Afr8MhContam_21.vcf 
 ```
 
-## downsample
+## downsample:
 We downsample the vcf by first identifying the number of data lines in the file (lines that do not start with #), and randomly select the specified "num" number of lines (30,000 by default). The output file will contain these downsampled lines, as well as all header lines.
 
 ### Example:
@@ -182,7 +181,7 @@ Let's add 5% missingness to two target individuals only: admix_1, and admix_3:
 python src/main.py missing -vcf $vcf -targets admix_1,admix_3 -rate 0.05 -out ./test/simulated_human_fewMissing_21.vcf 
 ```
 
-## dpFilter
+## dpFilter:
 We simulate depth for each target individual and position from a distribution with a provided mean and variance. Multiallelic positions are skipped in this step and removed from the output file. By default, depth (DP) is sampled from a negative binomial distribution wtih mean 5 and variance 3, though these parameters can be updated with input arguments. The gentoype is set to missing (./.) if there are no reads. At homozygous sites with reads, all reads are assigned to the homozygous allele. At heterozygous sites, the reads (DP) are distributed across alleles in the following way:
 - If the number of reads is less than the dropout threshold (default 3, but can be specified with the `dropout` argument), then the genotype is converted to homozygous. The allele is selected by random, following the reference bias (default 0.55 but cant be specified with the `bias` argument). For example, if bias = 0.55, 55% of the time the position will become homozygous reference, and 45% of the time the position will become homozygous alternative
 - If the number of reads are gereater than the dropout threshold, they are distributed following a binomial distribution. if either allele has no reads assigned then the genotype is homozygous for the other allele. Otherwise the reads supporting each allele are output
@@ -198,7 +197,21 @@ Let's simulate depth in two target individuals only (admix_2, admix_4), with mea
 python src/main.py dpFilter -vcf $vcf -targets admix_2,admix_4 -mean 10 -variance 2 -dropout 4 -bias 0.7  
 ```
 
-## Combining Simulated Features
-Each run of archSim only will simulate one feature. However, features can be combined by stringing together  
+## Combining Simulated Features:
+Each run of archSim only will simulate one feature. However, features can be combined by applying each method to the output of the previous method. Be sure to specify the output file names.
+
+Let's simulate a dataset where the target individuals have 5% deamination and 10% contamination from two modern human individuals: Afr_1 and Afr_9. This dataset will also be downsampled to 10,000 positions, and all individuals will be pseudohaploid.
+
+```note
+python src/main.py deaminate -vcf $vcf -targets test/individuals_all.json -out ./test/simulated_human_deaminated_21.vcf
+
+python src/main.py contaminate -vcf ./test/simulated_human_deaminated_21.vcf -targets test/individuals_all.json -mh -modern Afr_1,Afr_9 -r 0.1 -out ./test/simulated_human_deamContam_21.vcf
+
+python src/main.py downsample -vcf ./test/simulated_human_deamContam_21.vcf -num 10000 -out ./test/simulated_human_deamContamDs_21.vcf
+
+python src/main.py pseudohaploid -vcf ./test/simulated_human_deamContam_21.vcf -out ./test/simulated_human_deamContamDsPsuedohap_21.vcf
+```
+
+The output dataset should be a valid VCF that is compatible with other downstream tools, like bcftools
 
 
