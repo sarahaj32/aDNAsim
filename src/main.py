@@ -127,6 +127,7 @@ def main():
 
         if args.mode == "dpFilter":
             sample_list = parse_indivs(args.targets, "target")
+            print(f"Simulating depth with mean: {args.mean}, variance: {args.variance}, dropout: {args.dropout}, bias: {args.bias}, distribution: {args.dist}")
             add_depth(args.vcf, args.out, sample_list, args.mean, args.variance, args.bias, args.dropout, args.dist) 
             print("Finished adding depth")
 
@@ -134,14 +135,3 @@ def main():
 if __name__ == "__main__":
     print("starting")
     main()
-
-# variables for testing:
-# vcf_path = "/global/scratch/users/sarahj32/sim-fstats/data/medium/original/full/vcf/sim1_original_full_filtered_17.vcf"
-# sample_list = ["pop_1", "pop_2", "pop_3"]
-# new_vcf = "test.vcf"
-# sample_list = []
-
-# other example vcfs:
-# bcftools view /global/scratch/p2p3/pl1_moorjani/sarahj32/superarchaic_introgression/superarchaic_analysis/data/VCFs/hg38/AltaiDen_merged_hg38_chr21.v 10000 > test_multi_geno.vcf 
-# vcf_path = "test_multi_geno.vcf"
-# sample_list = ["AltaiNea"]
