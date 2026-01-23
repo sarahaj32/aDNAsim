@@ -5,11 +5,11 @@
 sarahj32@berkeley.edu
 
 ---
-1. [Installation](#Installation)
-2. [Usage](#Usage)
-3. [Simulation Details and Examples](#Simulation-Details-and-Example)
-4. [Examples](#Examples)
-5. [Combining Features](#Combining-Features)
+1. [Installation](#installation)
+2. [Usage](#usage)
+3. [Simulation Details and Examples](#simulation-details-and-dxamples)
+4. [Examples](#examples)
+5. [Combining Features](#combining-features)
 ---
 
 ## Installation
