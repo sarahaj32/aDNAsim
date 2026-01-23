@@ -1,154 +1,105 @@
 """
-Helper file with functions that randomly samples read depths from a normal distribution 
-for specified individuals. Does not alter the genotypes of other individuals.
-Also contains an option to remove
+Helper file with functions that randomly samples read depths for a sample from a negative binomial distribution,
+then distributes those reads across alleles following binomial distribtuion, creating missing data for sites
+that no reads support, and inducing homozygous genotypes when depth is below a given threshold with the allele
+being selected with the given reference bias. 
 """
 
 from helper_functions import parse_header
 import numpy as np
 import random
 
-def get_depth(mean, var):
+# pnina's updated function that allows for negative binomial sampling
+def get_sample_depth(mean, var, dist="nbinom"):
     """
-    A helper function that samples depth from a normal distribution,
-    with a given mean and variance.
-    This is the total reads for this site, is distributed across alleles in later functions
-    I should change so that it's not only normal
+    A helper function that samples DP for a sample from 
+    a nbinomial distribution with a given mean and variance.
+    This is the total reads for this site, and is distributed 
+    across alleles in later functions.
     """
+    m = max(0.0, float(mean))
+    v = float(var)
+    if dist == "nbinom":
+        # v = m + m^2/size  → size = m^2 / (v - m)
+        if v <= m or m <= 0:
+            dist = "poisson"
+        else:
+            size = (m*m) / max(v - m, 1e-9)
+            p = size / (size + m)
+            return int(np.random.negative_binomial(size, p))
+    if dist == "poisson":
+        return int(max(0, np.random.poisson(lam=m)))
+    if dist == "normal":
+        sd = math.sqrt(v if v is not None else m + 1.0)
+        return max(0, int(round(np.random.normal(loc=m, scale=sd))))
+    raise ValueError("depth_dist must be 'nbinom','poisson','normal'")
 
-    depth = max(round(np.random.normal(mean, var)), 0)
-    depth1 = depth2 = depth
-    return depth1, depth2
-
-def pos_depth_all(pos, mean, var):
+def pos_depth(pos, mean, var, ref_bias, dropout_depth, dist):
     """
     A function that adds depth AND
-    1. outputs missing genotypes if depth is 0
-    2. outputs homozygous genotype if depth is 3 or less
-        randomly selects allele
-    3. randomly disperses 3 or more reads across alelels  
+    1. adds missing data if no reads are sampled for a given position and individual
+    2. outputs homozygous genotype if depth is below the dropout depth or less
+        randomly selects allele with the provided reference bias
+    3. at heterozygous sites disperses 3 or more reads across alleles following a binomial distribution.
+    If no reads are assigned to an allele, converts to homozygous
     """
 
-    depth1, depth2 = get_depth(mean, var)
-    # the overall depth is the sum of the depth for each allele
-    depth = depth1 + depth2
+    dp = get_sample_depth(mean, var, dist)
+    a1=pos[0]
+    a2=pos[2]
+    sep=pos[1]
+    # if no reads, output missing genotype
+    if dp <= 0:
+        return "./.:.:0"
 
-    # add missing genotype if there are no reads
-    if depth == 0:
-        gt = "./."
-    
-    # homozygous: all reads support 1 allele 
-    elif pos[0] == pos[2]:
+    # homozygote: all reads support 1 allele 
+    if a1 == a2:
+        depth1 = depth2 = dp
         gt = pos[0:3]
-        if pos[0] == '0':
+        if a1 == '0':
             depth2 = 0
         else:
             depth1 = 0
+        return(f"{gt}:{str(depth1)},{str(depth2)}:{str(dp)}")
+    #heterozygote: low-DP dropout → miscall as homo (REF-tilted)
+    if dp <= dropout_depth:
+        homo = '0' if random.random() < ref_bias else '1'
+        depth1, depth2 = (dp, 0) if homo == '0' else (0, dp)
+        return f"{homo}{sep}{homo}:{depth1},{depth2}:{dp}"
 
-    # heterozygous: induce false homozygous if there are 3 or fewer reads
-    elif depth <= 3:
-        # randomly select the allele to be homozygous
-        allele = random.choice([pos[0], pos[2]]) # could adjust this line to induce a reference bias
-        gt = f"{allele}{pos[1]}{allele}"
-        if allele == 0:
-            depth2 = 0
-        else:
-            depth1 = 0
-    # if there are more than 3 reads, randomly distribute the total reads between alleles
-    else:
-        gt = pos[0:3]
-        # ensure that there is at least 1 read supporting each allele - but randomly distribute
-        depth1 = random.randint(1, (depth - 1))
-        depth2 = depth - depth1 
-    # output genotype, with depth information
-    return(f"{gt}{pos[3:]}:{str(depth1)},{str(depth2)}:{str(depth)}")
+    # if there are more than 3 reads, distribute the total reads between alleles
+    depth1 = np.random.binomial(dp, ref_bias)
+    depth2 = dp - depth1
+   
+    # if all reads go to one allele, also change GT to homozygous
+    if depth1 == 0:
+        # all ALT reads → 1/1
+        return f"1{sep}1:0,{dp}:{dp}"
+    elif depth2 == 0:
+        # all REF reads → 0/0
+        return f"0{sep}0:{dp},0:{dp}"
 
-def pos_depth_only(pos, mean, var):
-    """
-    A function that adds depth ONLY
-    *does not alter any genotypes*
-    randomly disperses 3 or more reads across alleles  
-    """
+    # otherwise it's a true heterozygote
+    return(f"{pos[:3]}:{str(depth1)},{str(depth2)}:{str(dp)}")
 
-    depth1, depth2 = get_depth(mean, var)
-    depth = depth1 + depth2
-
-    # homozygous: all reads support 1 allele     
-    if pos[0] == pos[2]:
-        if pos[0] == '0':
-            depth2 = 0
-        else:
-            depth1 = 0
-
-    # randomly distribute the total reads between alleles at heterozygous sites
-    else:
-        # ensure that there is at least 1 read supporting each allele - but randomly distribute
-        depth1 = random.randint(1, max(1, (depth - 1)))
-        depth2 = depth - depth1 
-
-    return(f"{pos}:{str(depth1)},{str(depth2)}:{str(depth)}")
-
-def pos_depth_homo(pos, mean, var):
-    """
-    A function that adds depth AND
-    1. outputs homozygous genotype if depth is 3 or less
-        randomly selects allele
-    2. randomly disperses 3 or more reads across alleles
-    *does not output missing data, even if depth = 0*
-    """
-
-    depth1, depth2 = get_depth(mean, var)
-    depth = depth1 + depth2
-
-    # homozygous: all reads support 1 allele 
-    if pos[0] == pos[2]:
-        gt = pos[0:3]
-        if pos[0] == '0':
-            depth2 = 0
-        else:
-            depth1 = 0
-
-    # heterozygous: induce false homozygous if there are 3 or fewer reads
-    elif depth <= 3:
-        # randomly select the allele to be homozygous
-        allele = random.choice(pos[0], pos[2]) # could adjust this line to induce a reference bias
-        gt = f"{allele}{pos[1]}{allele}"
-        if allele == 0:
-            depth2 = 0
-        else:
-            depth1 = 0
-
-    # if there are more than 3 reads, randomly distribute the total reads between alleles
-    else:
-        gt = pos[0:3]
-        # ensure that there is at least 1 read supporting each allele - but randomly distribute
-        depth1 = random.randint(1, (depth - 1))
-        depth2 = depth - depth1 
-
-    return(f"{gt}{pos[3:]}:{str(depth1)},{str(depth2)}:{str(depth)}")
-
-
-def add_depth(vcf_path, new_vcf, sample_list, mean, var, fun_name): # distribution, 
+def add_depth(vcf_path, new_vcf, sample_list, mean, var, ref_bias, dropout, dist):
     """
     function that 
     """
     exclude = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT"]
 
     with open(vcf_path, "r") as file1, open(new_vcf, "w") as outfile:
-
-        # This is the function to apply: either pos_depth_all, pos_depth_only, pos_depth_homo
-        dp_fun = globals()[fun_name]
         for line in file1:
             line = line.strip().split("\t")
             if line[0].startswith("#"):
                 if "#CHROM" in line[0]:
-                    # add on header with FORMAT information (so that the depth we add can still be parsed)
-                    outfile.write('##FORMAT=<ID=AD,Number=1,Type=String,Description="allele_depth">\n')
-                    outfile.write('##FORMAT=<ID=DP,Number=1,Type=String,Description="total depth">\n')
-                    header_ix, include = parse_header(line, sample_list)
+                    # add on header with FORMAT information (so that the depth we add can still be parsed by bcftools etc.)
+                    outfile.write('##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allele depths">\n')
+                    outfile.write('##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">\n')
+                    header_ix, include, name = parse_header(line, sample_list)
                     exclude_ix = [i for i,name in enumerate(line) if name in exclude]
                     outfile.write("\t".join(line) + "\n")
-
+                # write out all header lines
                 else:
                     outfile.write("\t".join(line) + "\n")
 
@@ -156,11 +107,11 @@ def add_depth(vcf_path, new_vcf, sample_list, mean, var, fun_name): # distributi
                 # this allows us to add AD and DP to all lines:
                 metrics = [line[i] for i in range(len(line)) if i in exclude_ix]
                 metrics[header_ix["format_ix"]] += ":AD:DP"
-                # if line[header_ix["alt_ix"]] != ".": # this would allow us to only focus on variable sites - probably not a good idea
 
                 # add in depth for every line - but only to the specified individuals
-                line = [dp_fun(line[i], mean, var) if i in include else (line[i] + "::") for i in range(len(line))]
-                # remove "metrix" from the line (those don't need any depth annotations)
+                # all other individuals get a "::" added to their FORMAT field
+                line = [pos_depth(line[i], mean, var, ref_bias, dropout, dist) if i in include else (line[i] + "::") for i in range(len(line))]
+                # remove "metrics" from the line (those don't need any depth annotations)
                 line = [line[i] for i in range(len(line)) if i not in exclude_ix]
                 # then recombine
                 line = metrics + line
