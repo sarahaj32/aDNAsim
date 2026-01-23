@@ -4,7 +4,7 @@
 ---
 1. [Installation](#Installation)
 2. [Usage](#Usage)
-3. [Simulation Details](#Simulation Details)
+3. [Simulation Details and Examples](#Simulation)
 3. [Examples](#Examples)
 ---
 
@@ -101,11 +101,12 @@ Example making only populations 0 and 10 pseudohaploid:
 
 python src/main.py pseudohaploid -vcf $vcf -out ./test/pseudohaploid_pop0pop10_21.vcf -target pop_0,pop_10
 
-## Simulation details
-# pseudohaploid:
+## Simulation Details and Examples
+
+## pseudohaploid:
 At every position, an allele will be randomly selected from each target individual, and the genotype will become homozygous for that allele. Homozygous positions will be unaffected, but heterozygous positions will be converted to homozygous reference or homozygous alternative with an even probability. If the input is phased VCF, the output pseudohaploid VCF will still be phased. 
 
-# Example:
+### Example:
 Let's simulate the case where only the target individuals are converted to psuedohaploid:
 ```note
 python src/main.py pseudohaploid -vcf $vcf -targets test/individuals_all.json -out ./test/simulated_human_pseudohaploid_21.vcf 
@@ -122,22 +123,21 @@ We could also simulate a case where all individuals are converted to pseudohaplo
 python src/main.py pseudohaploid -vcf $vcf -targets admix_1,admix_2 -out ./test/simulated_human_pseudohaploid_2Admix_21.vcf 
 ```
 
-
-# deaminate:
+## deaminate:
 We induce genotype errors at transition sites, representative of errors likely to be seen from deamination, by converting homozygous reference calls to heterozygous calls at the specified rate (0.05 by default). By default, transition sites are determined from the VCF alleles as C/T, T/C, A/G, G/A sites. However, if the "-proportion" argument is specified, transition sites will be determined as that proprotion of all sites. If the input genotypes are phased, the output genotypes will still be phased, and any new alternative alleles will be randomly assigned to either chromosome.  
 
-# Example:
+### Example:
 Let's simulate deamination-related errors in the target individuals only:
 ```note
 python src/main.py deaminate -vcf $vcf -targets test/individuals_all.json -out ./test/simulated_human_deaminated_21.vcf 
 ```
 
-# contaminate (ancestral)
+## contaminate (ancestral)
 We simulate faunal contamination by converting derived alleles to the ancestral at the specified rate (0.05 by default). If a site is contaminated and converted to heterozygous, and the orignal genotype was phased, the ancestral allele will be randomly assinged between chromosomes. Multiallelic positions are skipped in this step and removed from the output file. 
 
 Note - this assumes that the VCF is polarized so that the reference allele is ancestral and the alternative allele is derived. If the VCF is not polarized, ancestral contamination can be simulated using the "modern human" simulation mode (see next section).
 
-# Example:
+### Example:
 Let's simulate ancestral contamination in the target individuals only, at the default rate:
 ```note
 python src/main.py contaminate -vcf $vcf -targets test/individuals_all.json -ancestral -out ./test/simulated_human_ancContam_21.vcf 
@@ -148,14 +148,14 @@ Let's simulate a large amount of ancestral contamination in the target individua
 python src/main.py contaminate -vcf $vcf -targets test/individuals_all.json -ancestral -rate 0.2 -out ./test/simulated_human_highAncContam_21.vcf 
 ```
 
-# contaminate (modern human)
+## contaminate (modern human)
 We simulate modern human contamination by replacing the genotypes of the target individuals with the genotypes of a randomly selected contaminating individual, at at specified rate (default = 0.05). At each position in each individual, the contaminating genotype will be randomly selected from genotypes at that position of all the contaminating individuals. 
 
 Contamination from the same individual can be simulated into the same target individual in chunks by specifying the length argument. If the `-length 1000` argument is added, then at the given rate the target individual's next 1000 genotypes will be replaced by the next 1000 genotypes of one of the contaminating individuals. Note that if all VCF snps are at least 1000 bp apart, the `-length 1000` will yield the same results as not specifying the length (or `-length 1`). If VCF snps are closer than 1000 bp, then the resulting contamination amount will be slightly higher than the provided rate, since the rate specifies how often the chunk of 1000 bp are replaced, but each contamination event contributes more than 1 contaminating genotype
 
 While this module was created to simulate modern human contamination, any individual can be used for the contaminating individual. For example, if the VCF is not polarized, an ancestral individual could be added to the VCF and specified as the "contaminating" individual.
 
-# Example:
+### Example:
 Let's simulate contamination in the target individuals from the specified contaminating individuals, at the default rate:
 ```note
 python src/main.py contaminate -vcf $vcf -mh -targets test/individuals_all.json -modern test/individuals_all.json -out ./test/simulated_human_mhContam_21.vcf 
@@ -172,29 +172,13 @@ Let's simulate a contamination from a single individual (Afr_8) into the target 
 python src/main.py contaminate -vcf $vcf -mh -targets test/individuals_all.json -modern Afr_8 -rate 0.08 -out ./test/simulated_human_Afr8MhContam_21.vcf 
 ```
 
-At every position in all specified individuals, at a specified rate contamination may be added. When contamination is added:
-1. a modern human individual is randomly selected
-2. the genotype of the contaminatED individual is swapped for the genotype of the contaminatING individual
-3. The genotypes are similarly swapped for the next 'length' basepairs (ie: if length = 1000, any SNPs in the next 1000 basepairs will receive the genotype of the contaminating individual). This is tracked separately for each contaminatED individual, so all contaminating "chunks" are independent
-4. After this contaminating "chunk" the process repeats, and at the same rate again at the next position, that individual may be contaminated
+## downsample
+We downsample the vcf by first identifying the number of data lines in the file (lines that do not start with #), and randomly select the specified "num" number of lines (30,000 by default). The output file will contain these downsampled lines, as well as all header lines.
 
-# Example:
-Let's simulate deamination-related errors in the target individuals only:
+### Example:
+Let's downsample our VCF to 10,000 SNPs:
 ```note
-python src/main.py deaminate -vcf $vcf -targets test/individuals_all.json -out ./test/simulated_human_deaminated_21.vcf 
+python src/main.py downsample -vcf $vcf -num -out ./test/simulated_human_downsampled_21.vcf 
 ```
+The resulting VCF has 10,008 rows, the 8 header rows from the original VCF and the 10,000 downsampled data rows. 
 
-# contaminate
-At every position in all specified individuals, at a specified rate contamination may be added. When contamination is added:
-1. a modern human individual is randomly selected
-2. the genotype of the contaminatED individual is swapped for the genotype of the contaminatING individual
-3. The genotypes are similarly swapped for the next 'length' basepairs (ie: if length = 1000, any SNPs in the next 1000 basepairs will receive the genotype of the contaminating individual). This is tracked separately for each contaminatED individual, so all contaminating "chunks" are independent
-4. After this contaminating "chunk" the process repeats, and at the same rate again at the next position, that individual may be contaminated
-
-> modern human contamination
-At every position in all specified individuals, at a specified rate contamination may be added. When contamination is added:
-1. a modern human individual is randomly selected
-2. the genotype of the contaminatED individual is swapped for the genotype of the contaminatING individual
-3. The genotypes are similarly swapped for the next 'length' basepairs (ie: if length = 1000, any SNPs in the next 1000 basepairs will receive the genotype of the contaminating individual). This is tracked separately for each contaminatED individual, so all contaminating "chunks" are independent
-4. After this contaminating "chunk" the process repeats, and at the same rate again at the next position, that individual may be contaminated
-```
