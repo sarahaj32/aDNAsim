@@ -3,7 +3,7 @@ Helper file with functions to randomly sample an allele
 from heterozygous positions, outputting pseudo-haploid genotype calls
 """
 
-from helper_functions import parse_header, multiallelic
+from helper_functions import parse_header
 import random
 
 def ph_geno_call(base):
