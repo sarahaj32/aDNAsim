@@ -25,6 +25,11 @@ Clone the repository:
 git clone https://github.com/sarahaj32/archSim.git
 ```
 
+Then to run the package, enter the downloaded directory
+```bash
+cd archSim
+```
+
 Dependencies: Python3
 
 ## Usage 
