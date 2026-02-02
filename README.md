@@ -1,4 +1,4 @@
-# aDNAsim
+# archSim
 ## A package for simulating archaic sediment and skeletal DNA features in VCF's
 
 ### Contact:
@@ -22,18 +22,18 @@ sarahj32@berkeley.edu
 
 Clone the repository:
 ```bash
-git clone https://github.com/sarahaj32/aDNAsim.git
+git clone https://github.com/sarahaj32/archSim.git
 ```
 
 Then to run the package, enter the downloaded directory
 ```bash
-cd aDNAsim
+cd archSim
 ```
 
 Dependencies: Python3
 
 ## Usage 
-aDNAsim is run on command line by calling: `python src/main.py`
+archSim is run on command line by calling: `python src/main.py`
 
 Parameter details: (this can also be shown for each method with the help flag: `python src/main.py deaminate -h`)
 
@@ -84,7 +84,7 @@ Parameter details: (this can also be shown for each method with the help flag: `
 ```
 
 ## Example Data:
-To provide examples of aDNAsim's usage, we simulated human data under a simple demography with an outgroup (representing African modern humans), a deeply divergent lineage (representing archaic hominins), and an admixed population between the outgroup and diverged lineage (representing non-African modern humans). The admixed population was sampled shortly after admixture and at present day, representing an ancient individual and modern human.
+To provide examples of archSim's usage, we simulated human data under a simple demography with an outgroup (representing African modern humans), a deeply divergent lineage (representing archaic hominins), and an admixed population between the outgroup and diverged lineage (representing non-African modern humans). The admixed population was sampled shortly after admixture and at present day, representing an ancient individual and modern human.
 
 `vcf=test/simulated_data.vcf`
 In this dataset, the following names correspond to the following populations:
@@ -217,7 +217,7 @@ python src/main.py dpFilter -vcf $vcf -targets admix_2,admix_4 -mean 10 -varianc
 ```
 
 ## Combining Simulated Features:
-Each run of aDNAsim only will simulate one feature. However, features can be combined by applying each method to the output of the previous method. Be sure to specify the output file names.
+Each run of archSim only will simulate one feature. However, features can be combined by applying each method to the output of the previous method. Be sure to specify the output file names.
 
 Let's simulate a dataset where the target individuals have 5% deamination and 10% contamination from two modern human individuals: Afr_1 and Afr_9. This dataset will also be downsampled to 10,000 positions, and all individuals will be pseudohaploid.
 
