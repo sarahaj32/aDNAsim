@@ -1,5 +1,5 @@
 # archSim
-## A package for simulating archaic sediment and skeletal DNA features in VCF's
+## A package for simulating archaic sediment and ancient DNA features in genomic data (VCF file)
 
 ### Contact:
 sarahj32@berkeley.edu
@@ -116,25 +116,34 @@ python src/main.py pseudohaploid -vcf test/simulated_data.vcf -out ./test/simula
 ```
 
 If we only have 2 admixed individuals that we want to be pseudohaploid, we can specify those in the command line without needing a json file:
-We could also simulate a case where all individuals are converted to pseudohaploid:
 ```note
 python src/main.py pseudohaploid -vcf test/simulated_data.vcf -targets admix_1,admix_2 -out ./test/simulated_human_pseudohaploid_2Admix_21.vcf 
 ```
 
+We could also simulate a case where all individuals are converted to pseudohaploid by not specifying any target individuals:
+```note
+python src/main.py pseudohaploid -vcf test/simulated_data.vcf -out ./test/simulated_human_pseudohaploid_2Admix_21.vcf 
+```
+
 ## deaminate:
-We induce genotype errors at transition sites, representative of errors likely to be seen from deamination, by converting homozygous reference calls to heterozygous calls at the specified rate (0.05 by default). By default, transition sites are determined from the VCF alleles as C/T, T/C, A/G, G/A sites. However, if the "-proportion" argument is specified, transition sites will be determined as that proprotion of all sites. If the input genotypes are phased, the output genotypes will still be phased, and any new alternative alleles will be randomly assigned to either chromosome.  
+We induce genotype errors at transition sites, representative of errors likely to be seen from deamination, by converting homozygous reference calls to heterozygous calls at the specified rate "-rate" (0.05 by default). By default, transition sites are determined from the VCF alleles as C/T, T/C, A/G, G/A sites. However, if the "-proportion" argument is specified, transition sites will be determined as that proportion of all sites, regardless of allel. If the input genotypes are phased, the output genotypes will still be phased, and any new alternative alleles will be randomly assigned to either chromosome.  
 
 ### Example:
-Let's simulate deamination-related errors in the target individuals only:
+Let's simulate deamination-related errors in the target individuals only, using the alleles in the VCF to specify transitions.:
 ```note
 python src/main.py deaminate -vcf test/simulated_data.vcf -targets test/individuals_all.json -out ./test/simulated_human_deaminated_21.vcf 
 ```
 
+Let's simulate deamination-related errors at a rate of 10% in the target individuals only. In this case, lets set 70% of positions to be transitions and susceptible to deamination errors.
+```note
+python src/main.py deaminate -vcf test/simulated_data.vcf -targets test/individuals_all.json -rate 0.1 -proportion 0.7 -out ./test/simulated_human_deaminated10_21.vcf 
+```
+
 ## contaminate 
 ## (ancestral):
-We simulate faunal contamination by converting derived alleles to the ancestral at the specified rate (0.05 by default). If a site is contaminated and converted to heterozygous, and the orignal genotype was phased, the ancestral allele will be randomly assinged between chromosomes. Multiallelic positions are skipped in this step and removed from the output file. 
+We simulate faunal contamination by converting alternative alleles to the reference at the specified rate (0.05 by default). Assuming the reference allele matches the ancestral allele, this represents faunal contamination inducing excess ancestral alleles. If a site is converted to heterozygous, and the orignal genotype is phased, the ancestral allele will be randomly assigned between chromosomes. Multiallelic positions are skipped in this step and removed from the output file. 
 
-Note - this assumes that the VCF is polarized so that the reference allele is ancestral and the alternative allele is derived. If the VCF is not polarized, ancestral contamination can be simulated using the "modern human" simulation mode (see next section).
+Note - this assumes that the VCF is polarized so that the reference allele is ancestral and the alternative allele is derived. If the VCF is not polarized, ancestral contamination can also be simulated using the "modern human" simulation mode (see next section).
 
 ### Example:
 Let's simulate ancestral contamination in the target individuals only, at the default rate:
