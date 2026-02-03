@@ -5,7 +5,7 @@ that no reads support, and inducing homozygous genotypes when depth is below a g
 being selected with the given reference bias. 
 """
 
-from helper_functions import parse_header
+from helper_functions import parse_header, multiallelic
 import numpy as np
 import random
 
