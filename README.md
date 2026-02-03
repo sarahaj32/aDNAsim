@@ -88,10 +88,14 @@ To provide examples of archSim's usage, we simulated human data under a simple d
 
 `vcf=test/simulated_data.vcf`
 In this dataset, the following names correspond to the following populations:
-Afr - African outgroup
-admix - modern humans with archaic admixture, sampled shortly after admixture
-AMH - anatomically modern humans, sampled prior to archaic admixture
-mh_contam - modern humans with archaic admixture, sampled at present time
+
+| Population name | Description                                                           | 
+|-----------------|-----------------------------------------------------------------------|
+| Afr             | African outgroup                                                      |
+| admix           | Modern humans with archaic admixture, sampled shortly after admixture |
+| AMH             | Anatomically nodern humans, sampled prior to archaic admixture        |
+| mh\_contam      | Modern humans with archaic admixture, sampled at present time         |
+
 
 There is also an example json file `test/individuals_all.json`, which identifies all of the "admixed" individuals as targets, and all of the "modern human" indivduals as contamination sources.
 
