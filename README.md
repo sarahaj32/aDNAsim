@@ -190,7 +190,7 @@ We downsample the vcf by first identifying the number of data lines in the file 
 ### Example:
 Let's downsample our VCF to 10,000 SNPs:
 ```note
-python src/main.py downsample -vcf test/simulated_data.vcf -num -out ./test/simulated_human_downsampled_21.vcf 
+python src/main.py downsample -vcf test/simulated_data.vcf -num 10000 -out ./test/simulated_human_downsampled_21.vcf 
 ```
 The resulting VCF has 10,008 rows, the 8 header rows from the original VCF and the 10,000 downsampled data rows. 
 
