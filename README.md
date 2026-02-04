@@ -36,6 +36,7 @@ Dependencies: Python3
 archSim is run on command line by calling: `python src/main.py`
 
 Parameter details: (this can also be shown for each method with the help flag: `python src/main.py deaminate -h`)
+Note that input VCFs must be unzipped prior to running
 
 ```note
 > psuedohaploid         
