@@ -42,23 +42,23 @@ Note that input VCFs must be unzipped prior to running
 > psuedohaploid         
     -vcf                [required] path to the vcf to simulate data in
     -out                outputfile (defaults to pseudohaploid.vcf)
-    -targets            a comma separated list of targets sample names, or path to a json file containing target sample names. These target samples are the ones that will become psuedohaploid
+    -targets            a comma separated list of targets sample names, or path to a file containing target sample names, with each name on a new row. These target samples are the ones that will become psuedohaploid
 
 > deaminate:
     -vcf                [required] path to the vcf to simulate data in
     -out                outputfile (defaults to deaminate.vcf)
-    -targets            a comma separated list of targets sample names, or path to a json file containing target sample names. These target samples are the ones that will become psuedohaploid
+    -targets            a comma separated list of targets sample names, or path to a file containing target sample names, with each name on a new row. These target samples are the ones that will become psuedohaploid
     -rate               Rate at which deamination will be simulated in the sites of the target population, between 0 and 1. Default = 0.05. (at this rate, homozygous reference gentoypes at transition sites in the selected individuals will convert to heterozygous)
     -proportion         The proportion of sites that will be specified as transitions. If this argument is not included, transition sites will be identified from VCF alleles
 
 > contaminate
     -vcf                [required] path to the vcf to simulate data in
     -out                outputfile (defaults to contaminate.vcf)
-    -targets            a comma separated list of targets sample names, or path to a json file 
+    -targets            a comma separated list of targets sample names, or path to a file containing target sample names, with each name on a new row
     -ancestral          flag that indicates that contaminated derived sites will be converted to heterozygous
     -rate               the rate at which contamination is induced, between 0 and 1. Default = 0.05.(at this rate, homozygous alternative gentoypes in the selected individuals will convert to heterozygous)
     -mh                 flag that indicates that contaminated sites will be contributed from a given set of modern human individuals
-    -modern             comma separated list of individuals to contaminate with, or path to a json file
+    -modern             comma separated list of individuals to contaminate with, or path to a file containing contaminating sample names, with each name on a new row
     -length             length of contaminating modern human fragments. Default = 1
 
 > downsample
@@ -68,13 +68,13 @@ Note that input VCFs must be unzipped prior to running
 
 > mising
     -vcf                [required] path to the vcf to simulate data in
-    -targets            a comma separated list of targets sample names, or path to a json file 
+    -targets            a comma separated list of targets sample names, or path to a file containing target sample names, with each name on a new row
     -out                outputfile (defaults to missing.vcf)
     -rate               rate at which genotypes will be converted to missing (./.). Default = 0.1
 
 > dpFilter
     -vcf                [required] path to the vcf to simulate data in
-    -targets            a comma separated list of targets sample names, or path to a json file 
+    -targets            a comma separated list of targets sample names, or path to a file containing target sample names, with each name on a new row
     -out                outputfile (defaults to dpFilter.vcf)
     -mean               the mean depth to simulate. Default = 5
     -variance           the variance of depth to simulate. Default = 2
@@ -98,7 +98,7 @@ In this dataset, the following names correspond to the following populations:
 | mh\_contam      | Modern humans with archaic admixture, sampled at present time         |
 
 
-There is also an example json file `test/individuals_all.json`, which identifies all of the "admixed" individuals as targets, and all of the "modern human" indivduals as contamination sources.
+There are also example target and individual files `test/targets.txt` and `test/contam.txt`, which identifies all of the "admixed" individuals as targets, and all of the "modern human" indivduals as contamination sources. Note the format of these files are that each sample name is on a new line, and names much match the ID's in the VCF file.
 
 With these files, you can replicate all of the below examples.
 
@@ -112,7 +112,7 @@ At every position, an allele will be randomly selected from each target individu
 ### Example:
 Let's simulate the case where only the target individuals are converted to psuedohaploid:
 ```note
-python src/main.py pseudohaploid -vcf test/simulated_data.vcf -targets test/individuals_all.json -out ./test/simulated_human_pseudohaploid_21.vcf 
+python src/main.py pseudohaploid -vcf test/simulated_data.vcf -targets test/targets.txt -out ./test/simulated_human_pseudohaploid_21.vcf 
 ```
 
 We could also simulate a case where all individuals are converted to pseudohaploid:
@@ -120,7 +120,7 @@ We could also simulate a case where all individuals are converted to pseudohaplo
 python src/main.py pseudohaploid -vcf test/simulated_data.vcf -out ./test/simulated_human_pseudohaploid_all_21.vcf 
 ```
 
-If we only have 2 admixed individuals that we want to be pseudohaploid, we can specify those in the command line without needing a json file:
+If we only have 2 admixed individuals that we want to be pseudohaploid, we can specify those in the command line without needing a file of sample names:
 ```note
 python src/main.py pseudohaploid -vcf test/simulated_data.vcf -targets admix_1,admix_2 -out ./test/simulated_human_pseudohaploid_2Admix_21.vcf 
 ```
@@ -136,12 +136,12 @@ We induce genotype errors at transition sites, representative of errors likely t
 ### Example:
 Let's simulate deamination-related errors in the target individuals only, using the alleles in the VCF to specify transitions.:
 ```note
-python src/main.py deaminate -vcf test/simulated_data.vcf -targets test/individuals_all.json -out ./test/simulated_human_deaminated_21.vcf 
+python src/main.py deaminate -vcf test/simulated_data.vcf -targets test/targets.txt -out ./test/simulated_human_deaminated_21.vcf 
 ```
 
 Let's simulate deamination-related errors at a rate of 10% in the target individuals only. In this case, lets set 70% of positions to be transitions and susceptible to deamination errors.
 ```note
-python src/main.py deaminate -vcf test/simulated_data.vcf -targets test/individuals_all.json -rate 0.1 -proportion 0.7 -out ./test/simulated_human_deaminated10_21.vcf 
+python src/main.py deaminate -vcf test/simulated_data.vcf -targets test/targets.txt -rate 0.1 -proportion 0.7 -out ./test/simulated_human_deaminated10_21.vcf 
 ```
 
 ## contaminate 
@@ -153,12 +153,12 @@ Note - this assumes that the VCF is polarized so that the reference allele is an
 ### Example:
 Let's simulate ancestral contamination in the target individuals only, at the default rate:
 ```note
-python src/main.py contaminate -vcf test/simulated_data.vcf -targets test/individuals_all.json -ancestral -out ./test/simulated_human_ancContam_21.vcf 
+python src/main.py contaminate -vcf test/simulated_data.vcf -targets test/targets.txt -ancestral -out ./test/simulated_human_ancContam_21.vcf 
 ```
 
 Let's simulate a large amount of ancestral contamination in the target individuals only, at a rate of 20%:
 ```note
-python src/main.py contaminate -vcf test/simulated_data.vcf -targets test/individuals_all.json -ancestral -rate 0.2 -out ./test/simulated_human_highAncContam_21.vcf 
+python src/main.py contaminate -vcf test/simulated_data.vcf -targets test/targets.txt -ancestral -rate 0.2 -out ./test/simulated_human_highAncContam_21.vcf 
 ```
 
 ## (modern human):
@@ -171,18 +171,18 @@ While this module was created to simulate modern human contamination, any indivi
 ### Example:
 Let's simulate contamination in the target individuals from the specified contaminating individuals, at the default rate:
 ```note
-python src/main.py contaminate -vcf test/simulated_data.vcf -mh -targets test/individuals_all.json -modern test/individuals_all.json -out ./test/simulated_human_mhContam_21.vcf 
+python src/main.py contaminate -vcf test/simulated_data.vcf -mh -targets test/targets.txt -modern test/contam.txt -out ./test/simulated_human_mhContam_21.vcf 
 ```
 
 Let's simulate a contamination from the specified individuals into the target individuals, in chunks of 1000 bp, at a rate of 0.01:
 ```note
-python src/main.py contaminate -vcf test/simulated_data.vcf -mh -targets test/individuals_all.json -modern test/individuals_all.json -rate 0.01 -length 1000 -out ./test/simulated_human_chunkMhContam_21.vcf 
+python src/main.py contaminate -vcf test/simulated_data.vcf -mh -targets test/targets.txt -modern test/contam.txt -rate 0.01 -length 1000 -out ./test/simulated_human_chunkMhContam_21.vcf 
 ```
 Again, the actual fraction of contaminating genotypes will be slightly higher than 1% if any of the snps are within 1000 bp of another snp.
 
 Let's simulate a contamination from a single individual (Afr_8) into the target individuals, at a rate of 8%:
 ```note
-python src/main.py contaminate -vcf test/simulated_data.vcf -mh -targets test/individuals_all.json -modern Afr_8 -rate 0.08 -out ./test/simulated_human_Afr8MhContam_21.vcf 
+python src/main.py contaminate -vcf test/simulated_data.vcf -mh -targets test/targets.txt -modern Afr_8 -rate 0.08 -out ./test/simulated_human_Afr8MhContam_21.vcf 
 ```
 
 ## downsample:
@@ -201,7 +201,7 @@ We simulate missing data by converting genotypes of the specified target individ
 ### Example:
 Let's add 10% missingness (the default) to all target individuals:
 ```note
-python src/main.py missing -vcf test/simulated_data.vcf -targets test/individuals_all.json -out ./test/simulated_human_missing_21.vcf 
+python src/main.py missing -vcf test/simulated_data.vcf -targets test/targets.txt -out ./test/simulated_human_missing_21.vcf 
 ```
 
 Let's add 5% missingness to two target individuals only: admix_1, and admix_3:
@@ -217,7 +217,7 @@ We simulate depth for each target individual and position from a distribution wi
 ### Example:
 Let's simulate depth in all target individuals, with the default mean, variance, distribution, dropuout, and bias
 ```note
-python src/main.py dpFilter -vcf test/simulated_data.vcf -targets test/individuals_all.json  
+python src/main.py dpFilter -vcf test/simulated_data.vcf -targets test/targets.txt  
 ```
 
 Let's simulate depth in two target individuals only (admix_2, admix_4), with mean depth of 10 and variance of 2, a dropout depth of 4 and reference bias of 0.7
@@ -231,9 +231,9 @@ Each run of archSim only will simulate one feature. However, features can be com
 Let's simulate a dataset where the target individuals have 5% deamination and 10% contamination from two modern human individuals: Afr_1 and Afr_9. This dataset will also be downsampled to 10,000 positions, and all individuals will be pseudohaploid.
 
 ```note
-python src/main.py deaminate -vcf test/simulated_data.vcf -targets test/individuals_all.json -out ./test/simulated_human_deaminated_21.vcf
+python src/main.py deaminate -vcf test/simulated_data.vcf -targets test/targets.txt -out ./test/simulated_human_deaminated_21.vcf
 
-python src/main.py contaminate -vcf ./test/simulated_human_deaminated_21.vcf -targets test/individuals_all.json -mh -modern Afr_1,Afr_9 -r 0.1 -out ./test/simulated_human_deamContam_21.vcf
+python src/main.py contaminate -vcf ./test/simulated_human_deaminated_21.vcf -targets test/targets.txt -mh -modern Afr_1,Afr_9 -r 0.1 -out ./test/simulated_human_deamContam_21.vcf
 
 python src/main.py downsample -vcf ./test/simulated_human_deamContam_21.vcf -num 10000 -out ./test/simulated_human_deamContamDs_21.vcf
 
