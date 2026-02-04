@@ -84,9 +84,10 @@ Note that input VCFs must be unzipped prior to running
 
 ```
 
-## Input Data
-The main input is a VCF file. This file must be uncompressed. 
-There are also optional input files containing target and contaminating individual names. In these files, each individual is on a new line. The sample names in these files must match individual names in the VCF file
+## Input Data Format
+The main input is a VCF file. This file must be uncompressed, and follow standard VCF specifications. 
+
+There are optional input txt files containing target and contaminating individual names. In these files, each individual is on a new line. The sample names in these files must match individual names in the VCF file
 
 
 ## Example Data:
